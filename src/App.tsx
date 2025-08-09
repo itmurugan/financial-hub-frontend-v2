@@ -1,35 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Home, Upload, CreditCard, BarChart3, Brain, Menu, X } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import FileUpload from './components/FileUpload';
 import TransactionManager from './components/TransactionManager';
 import Reports from './components/Reports';
 import { Transaction } from './types';
-import { sampleTransactions } from './data/sampleData';
 
 type TabType = 'dashboard' | 'upload' | 'transactions' | 'reports';
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
-  const [transactions, setTransactions] = useState<Transaction[]>(sampleTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const response = await fetch('/api/transactions');
+        if (response.ok) {
+          const data = await response.json();
+          setTransactions(data);
+        }
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
 
   const handleTransactionsExtracted = (newTransactions: Transaction[]) => {
     setTransactions(prev => [...newTransactions, ...prev]);
   };
 
-  const handleUpdateTransaction = (updatedTransaction: Transaction) => {
-    setTransactions(prev => 
-      prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t)
-    );
+  const handleUpdateTransaction = async (updatedTransaction: Transaction) => {
+    try {
+      const response = await fetch(`/api/transactions/${updatedTransaction.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedTransaction),
+      });
+      if (response.ok) {
+        setTransactions(prev => 
+          prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t)
+        );
+      }
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+    }
   };
 
-  const handleDeleteTransaction = (id: string) => {
-    setTransactions(prev => prev.filter(t => t.id !== id));
+  const handleDeleteTransaction = async (id: string) => {
+    try {
+      const response = await fetch(`/api/transactions/${id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setTransactions(prev => prev.filter(t => t.id !== id));
+      }
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+    }
   };
 
-  const handleAddTransaction = (transaction: Transaction) => {
-    setTransactions(prev => [transaction, ...prev]);
+  const handleAddTransaction = async (transaction: Transaction) => {
+    try {
+      const response = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transaction),
+      });
+      if (response.ok) {
+        const createdTransaction = await response.json();
+        setTransactions(prev => [createdTransaction, ...prev]);
+      }
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+    }
   };
 
   const tabs = [
@@ -112,17 +162,25 @@ function App() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto">
-        {activeTab === 'dashboard' && <Dashboard transactions={transactions} />}
-        {activeTab === 'upload' && <FileUpload onTransactionsExtracted={handleTransactionsExtracted} />}
-        {activeTab === 'transactions' && (
-          <TransactionManager
-            transactions={transactions}
-            onUpdateTransaction={handleUpdateTransaction}
-            onDeleteTransaction={handleDeleteTransaction}
-            onAddTransaction={handleAddTransaction}
-          />
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="text-gray-500">Loading...</div>
+          </div>
+        ) : (
+          <>
+            {activeTab === 'dashboard' && <Dashboard transactions={transactions} />}
+            {activeTab === 'upload' && <FileUpload onTransactionsExtracted={handleTransactionsExtracted} />}
+            {activeTab === 'transactions' && (
+              <TransactionManager
+                transactions={transactions}
+                onUpdateTransaction={handleUpdateTransaction}
+                onDeleteTransaction={handleDeleteTransaction}
+                onAddTransaction={handleAddTransaction}
+              />
+            )}
+            {activeTab === 'reports' && <Reports transactions={transactions} />}
+          </>
         )}
-        {activeTab === 'reports' && <Reports transactions={transactions} />}
       </main>
 
       {/* Footer */}

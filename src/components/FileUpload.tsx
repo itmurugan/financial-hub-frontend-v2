@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Upload, FileText, Image, FileSpreadsheet, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { UploadedFile, Transaction } from '../types';
-import { aiCategorizationRules } from '../data/sampleData';
 
 interface FileUploadProps {
   onTransactionsExtracted: (transactions: Transaction[]) => void;
@@ -12,46 +11,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ onTransactionsExtracted }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [processingFile, setProcessingFile] = useState<string | null>(null);
 
-  const simulateAIExtraction = (fileName: string): Transaction[] => {
-    const transactions: Transaction[] = [];
-    const baseDate = new Date();
-    
-    // Simulate extracting 10-20 transactions from the file
-    const numTransactions = 10 + Math.floor(Math.random() * 10);
-    
-    for (let i = 0; i < numTransactions; i++) {
-      const merchantNames = [
-        'WALMART STORE #2341', 'AMAZON.COM', 'STARBUCKS #12345', 
-        'UBER TRIP', 'WHOLE FOODS MKT', 'NETFLIX.COM', 
-        'SHELL GAS STATION', 'TARGET STORE', 'CVS PHARMACY'
-      ];
-      
-      const merchant = merchantNames[Math.floor(Math.random() * merchantNames.length)];
-      const amount = 10 + Math.random() * 200;
-      
-      // AI categorization simulation
-      let category = 'Other Expense';
-      for (const [keyword, cat] of Object.entries(aiCategorizationRules)) {
-        if (merchant.toUpperCase().includes(keyword)) {
-          category = cat;
-          break;
-        }
-      }
-      
-      transactions.push({
-        id: `extracted-${Date.now()}-${i}`,
-        date: new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() - i),
-        description: merchant,
-        amount: parseFloat(amount.toFixed(2)),
-        category,
-        type: 'expense',
-        merchant,
-        source: fileName.endsWith('.csv') ? 'csv' : fileName.endsWith('.pdf') ? 'pdf' : 'image',
-      });
-    }
-    
-    return transactions;
-  };
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files) return;
@@ -73,19 +32,44 @@ const FileUpload: React.FC<FileUploadProps> = ({ onTransactionsExtracted }) => {
       
       setUploadedFiles(prev => [...prev, newFile]);
       
-      // Simulate AI processing delay
-      setTimeout(() => {
-        const extractedTransactions = simulateAIExtraction(file.name);
+      try {
+        // Upload file to API for processing
+        const formData = new FormData();
+        formData.append('file', file);
         
+        const response = await fetch('/api/files/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          const extractedTransactions = result.transactions || [];
+          
+          setUploadedFiles(prev => prev.map(f => 
+            f.id === fileId 
+              ? { ...f, status: 'completed', extractedTransactions } 
+              : f
+          ));
+          
+          onTransactionsExtracted(extractedTransactions);
+        } else {
+          setUploadedFiles(prev => prev.map(f => 
+            f.id === fileId 
+              ? { ...f, status: 'error' } 
+              : f
+          ));
+        }
+      } catch (error) {
+        console.error('Error uploading file:', error);
         setUploadedFiles(prev => prev.map(f => 
           f.id === fileId 
-            ? { ...f, status: 'completed', extractedTransactions } 
+            ? { ...f, status: 'error' } 
             : f
         ));
-        
-        onTransactionsExtracted(extractedTransactions);
+      } finally {
         setProcessingFile(null);
-      }, 2000);
+      }
     }
   };
 

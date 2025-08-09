@@ -1,46 +1,161 @@
-# Getting Started with Create React App
+# Financial Hub AI - Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A comprehensive React-based financial management application with AI-powered transaction categorization and document processing capabilities.
+
+## Features
+
+- **Dashboard**: Real-time financial overview with income, expenses, and savings tracking
+- **Transaction Management**: CRUD operations for financial transactions with filtering and search
+- **File Upload & Processing**: AI-powered extraction from PDFs, CSVs, and images
+- **Reports & Analytics**: Comprehensive financial reports with charts and trend analysis
+- **Responsive Design**: Mobile-friendly interface with modern UI/UX
+
+## Technology Stack
+
+- **Frontend**: React 18, TypeScript, Tailwind CSS
+- **Charts**: Recharts for data visualization
+- **Icons**: Lucide React
+- **Build Tool**: Create React App
+- **Testing**: Jest, React Testing Library
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 16+ and npm
+- Backend API server running (see API Requirements section)
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd financial-hub-frontend-v2
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Configure environment variables:
+```bash
+cp .env.example .env.local
+# Edit .env.local with your API endpoint
+```
+
+4. Start the development server:
+```bash
+npm start
+```
+
+The application will be available at [http://localhost:3000](http://localhost:3000).
 
 ## Available Scripts
 
-In the project directory, you can run:
-
 ### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+Runs the app in development mode with hot reloading.
 
 ### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Launches the test runner in interactive watch mode.
 
 ### `npm run build`
+Builds the app for production to the `build` folder.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### `npm run lint`
+Runs ESLint to check for code quality issues.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Docker Deployment
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Build Docker Image
+```bash
+docker build -t financial-hub-frontend .
+```
 
-### `npm run eject`
+### Run Container
+```bash
+docker run -p 3000:80 financial-hub-frontend
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### Docker Compose (Development)
+```bash
+docker-compose up -d
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## API Requirements
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+This frontend application expects a backend API server with the following endpoints:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Base URL
+All API calls are made relative to the root path (e.g., `/api/transactions`). Configure your backend to serve APIs at these endpoints or use a proxy.
 
-## Learn More
+### Required Endpoints
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+#### Transactions API
+- `GET /api/transactions` - Fetch all transactions
+- `POST /api/transactions` - Create new transaction
+- `PUT /api/transactions/:id` - Update existing transaction  
+- `DELETE /api/transactions/:id` - Delete transaction
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+#### Categories API
+- `GET /api/categories` - Fetch all transaction categories
+
+#### File Processing API
+- `POST /api/files/upload` - Upload and process financial documents
+
+For detailed API specifications, see [API_SPEC.md](./API_SPEC.md).
+
+## Project Structure
+
+```
+src/
+├── components/           # React components
+│   ├── Dashboard.tsx    # Main dashboard with financial overview
+│   ├── FileUpload.tsx   # File upload and AI processing
+│   ├── Reports.tsx      # Analytics and reporting
+│   └── TransactionManager.tsx # Transaction CRUD operations
+├── types/               # TypeScript type definitions
+├── App.tsx             # Main application component
+└── index.tsx           # Application entry point
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/new-feature`
+3. Make your changes and commit: `git commit -am 'Add new feature'`
+4. Push to the branch: `git push origin feature/new-feature`
+5. Submit a pull request
+
+## CI/CD
+
+This project uses GitHub Actions for continuous integration and deployment. See `.github/workflows/ci.yml` for the complete workflow.
+
+### Workflow Features
+- Automated testing on pull requests
+- Build verification
+- Docker image creation and publishing
+- Security scanning
+
+## Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```bash
+# API Configuration
+REACT_APP_API_BASE_URL=http://localhost:8000
+
+# Feature Flags
+REACT_APP_ENABLE_MOCK_DATA=false
+```
+
+## Browser Support
+
+- Chrome (latest)
+- Firefox (latest) 
+- Safari (latest)
+- Edge (latest)
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

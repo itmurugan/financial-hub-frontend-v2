@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  # Frontend Development Server
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_BASE_URL=http://localhost:8000
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - financial-hub-dev
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+  # Backend Development Server (placeholder)
+  backend-dev:
+    image: financial-hub-backend:dev
+    ports:
+      - "8000:8000"
+      - "9229:9229"  # Node.js debugging port
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:password@db-dev:5432/financial_hub_dev
+      - JWT_SECRET=dev-jwt-secret
+      - DEBUG=*
+    networks:
+      - financial-hub-dev
+    depends_on:
+      - db-dev
+      - redis-dev
+    restart: unless-stopped
+    volumes:
+      - backend_dev_data:/app/uploads
+      - ./backend:/app  # Mount backend source code if available
+
+  # Development Database
+  db-dev:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=financial_hub_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./db/init-dev.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - financial-hub-dev
+    restart: unless-stopped
+
+  # Development Redis
+  redis-dev:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - financial-hub-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@financialhub.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "8080:80"
+    networks:
+      - financial-hub-dev
+    depends_on:
+      - db-dev
+    restart: unless-stopped
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+  # Redis Commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis-dev:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - financial-hub-dev
+    depends_on:
+      - redis-dev
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  backend_dev_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  financial-hub-dev:
+    driver: bridge

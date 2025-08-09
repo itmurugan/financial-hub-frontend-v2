@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Edit2, Trash2, Plus, Check, X, Search } from 'lucide-react';
-import { Transaction } from '../types';
-import { categories } from '../data/sampleData';
+import { Transaction, Category } from '../types';
 
 interface TransactionManagerProps {
   transactions: Transaction[];
@@ -16,6 +15,7 @@ const TransactionManager: React.FC<TransactionManagerProps> = ({
   onDeleteTransaction,
   onAddTransaction,
 }) => {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Transaction>>({});
   const [showAddForm, setShowAddForm] = useState(false);
@@ -30,6 +30,22 @@ const TransactionManager: React.FC<TransactionManagerProps> = ({
     type: 'expense',
     source: 'manual',
   });
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const filteredTransactions = transactions.filter(t => {
     const matchesSearch = t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
