@@ -1,18 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Calendar, Download, TrendingUp, TrendingDown } from 'lucide-react';
-import { Transaction } from '../types';
-import { categories } from '../data/sampleData';
+import { Transaction, Category } from '../types';
 
 interface ReportsProps {
   transactions: Transaction[];
 }
 
 const Reports: React.FC<ReportsProps> = ({ transactions }) => {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [dateRange, setDateRange] = useState('month');
   const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [endDate, setEndDate] = useState(new Date());
   const [selectedCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const filteredTransactions = transactions.filter(t => {
     const inDateRange = t.date >= startDate && t.date <= endDate;

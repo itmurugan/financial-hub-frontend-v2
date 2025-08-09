@@ -1,16 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, CreditCard } from 'lucide-react';
-import { Transaction } from '../types';
-import { categories } from '../data/sampleData';
+import { Transaction, Category } from '../types';
 
 interface DashboardProps {
   transactions: Transaction[];
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
+  const [categories, setCategories] = useState<Category[]>([]);
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
   
   const monthlyTransactions = transactions.filter(t => 
     t.date.getMonth() === currentMonth && t.date.getFullYear() === currentYear

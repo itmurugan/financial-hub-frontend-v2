@@ -1,0 +1,28 @@
+# Development Dockerfile for React app
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies for development
+RUN apk add --no-cache git
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including dev dependencies)
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Add labels
+LABEL maintainer="Financial Hub AI Team"
+LABEL version="1.0.0-dev"
+LABEL description="Financial Hub AI Frontend - Development Environment"
+
+# Start development server
+CMD ["npm", "start"]
